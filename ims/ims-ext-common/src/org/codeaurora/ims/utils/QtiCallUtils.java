@@ -1,5 +1,4 @@
-/*
- * Copyright (c) 2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -25,42 +24,35 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
-package org.codeaurora.internal;
+package org.codeaurora.ims.utils;
 
 import android.content.Context;
-import android.content.Intent;
-import android.content.ServiceConnection;
-import android.content.ComponentName;
-import android.os.IBinder;
-import android.os.ServiceManager;
-import android.util.Log;
+import android.provider.Settings;
+import android.telephony.ims.ProvisioningManager;
 
-public class ServiceUtil {
-    private ServiceUtil() {}
+import org.codeaurora.ims.QtiCallConstants;
 
-    static public boolean bindService(Context context, ServiceConnection connection) {
-        IBinder extTelephony = ServiceManager.getService("qti.radio.extphone");
-
-        boolean success = (extTelephony != null)? true: false;
-
-        if (success) {
-            connection.onServiceConnected(
-                    new ComponentName("com.qualcomm.qti.internal.telephony",
-                            "com.qualcomm.qti.internal.telephony"
-                            + "com.qualcomm.qti.internal.telephony.ExtTelephonyServiceImpl"),
-                            extTelephony);
-        } else {
-            /* Service connection failed. Let the client connect to Stub service */
-        }
-
-        return success;
+/**
+ * This class contains Qti specific utiltity functions.
+ */
+public class QtiCallUtils {
+    /**
+     * Private constructor for QtiCallUtils as we don't want to instantiate this class
+     */
+    private QtiCallUtils() {
     }
 
-    static public boolean unbindService(ServiceConnection onnection) {
-        //We are not connecting to a bound service so return true;
-        return true;
+     /**
+     * Returns the user configuration of IMS to CS retry setting
+     */
+    public static boolean isCsRetryEnabledByUser(Context context) {
+       return android.provider.Settings.Global.getInt(
+                    context.getContentResolver(),
+                    QtiCallConstants.IMS_TO_CS_RETRY_ENABLED,
+                    ProvisioningManager.PROVISIONING_VALUE_ENABLED) ==
+                            ProvisioningManager.PROVISIONING_VALUE_ENABLED;
+
     }
 }

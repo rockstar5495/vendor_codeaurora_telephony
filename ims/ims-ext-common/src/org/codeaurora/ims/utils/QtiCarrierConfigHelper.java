@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -39,8 +39,6 @@ import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
-import com.android.internal.telephony.PhoneConstants;
-
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.List;
@@ -48,6 +46,9 @@ import java.util.Map;
 
 public class QtiCarrierConfigHelper {
     static final String TAG  = QtiCarrierConfigHelper.class.getSimpleName();
+    private static final boolean DEBUG =
+            android.util.Log.isLoggable(TAG, android.util.Log.DEBUG);
+    private static final String DELIMITER = " : ";
     private static int PHONE_COUNT;
     private Context mContext;
     SubscriptionManager mSubscriptionManager;
@@ -66,7 +67,7 @@ public class QtiCarrierConfigHelper {
             if (intent != null && intent.getAction()
                     .equals(CarrierConfigManager.ACTION_CARRIER_CONFIG_CHANGED)) {
                 int phoneId = intent.getIntExtra(CarrierConfigManager.EXTRA_SLOT_INDEX,
-                        SubscriptionManager.INVALID_PHONE_INDEX);
+                        SubscriptionManager.INVALID_SIM_SLOT_INDEX);
                 if (mSubscriptionManager != null) {
                     SubscriptionInfo subInfo = mSubscriptionManager
                             .getActiveSubscriptionInfoForSimSlotIndex(phoneId);
@@ -120,40 +121,46 @@ public class QtiCarrierConfigHelper {
 
     public void setup(Context context) {
         if (context == null) {
+            throw new NullPointerException("QtiCarrierConfigHelper context is null in setup");
+        }
+        Context appContext = context.getApplicationContext();
+        if (appContext == null) {
+            throw new NullPointerException("QtiCarrierConfigHelper app context is null in setup");
+        }
+        logd("setup", "mInitialized - " + mInitialized.get());
+        if (!mInitialized.compareAndSet(false, true)) {
+            logd("setup", "already initialized exiting");
             return;
         }
-        mContext = context.getApplicationContext();
-        if (mContext != null) {
-            mInitialized.set(true);
-            PHONE_COUNT = ((TelephonyManager) mContext.getSystemService(Context.TELEPHONY_SERVICE)).
-                getPhoneCount();
-            mSubscriptionManager = (SubscriptionManager) mContext
-                .getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE);
-            mCarrierConfigManager = (CarrierConfigManager) mContext.getSystemService(
-                    Context.CARRIER_CONFIG_SERVICE);
+        mContext = appContext;
+        PHONE_COUNT = ((TelephonyManager) mContext.getSystemService(Context.TELEPHONY_SERVICE)).
+            getPhoneCount();
+        mSubscriptionManager = (SubscriptionManager) mContext
+            .getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE);
+        mCarrierConfigManager = (CarrierConfigManager) mContext.getSystemService(
+                Context.CARRIER_CONFIG_SERVICE);
 
-            List<SubscriptionInfo> subInfos = mSubscriptionManager
-                    .getActiveSubscriptionInfoList();
-            if (subInfos != null) {
-                for (SubscriptionInfo subInfo : subInfos) {
-                    loadConfigsForSubInfo(subInfo);
-                }
+        List<SubscriptionInfo> subInfos = mSubscriptionManager
+                .getActiveSubscriptionInfoList();
+        if (subInfos != null) {
+            for (SubscriptionInfo subInfo : subInfos) {
+                loadConfigsForSubInfo(subInfo);
             }
-            subCache = new int[PHONE_COUNT];
-            IntentFilter filter = new IntentFilter(CarrierConfigManager
-                    .ACTION_CARRIER_CONFIG_CHANGED);
-            mContext.registerReceiver(mReceiver, filter);
-            mSubscriptionManager.addOnSubscriptionsChangedListener(mOnSubscriptionsChangeListener);
         }
+        subCache = new int[PHONE_COUNT];
+        IntentFilter filter = new IntentFilter(CarrierConfigManager
+                .ACTION_CARRIER_CONFIG_CHANGED);
+        mContext.registerReceiver(mReceiver, filter);
+        mSubscriptionManager.addOnSubscriptionsChangedListener(mOnSubscriptionsChangeListener);
     }
 
     public void teardown() {
-        if (!mInitialized.get()) {
-            Log.i(TAG, "WARNING, Don't set up yet or already tear down.");
+        logd("teardown", "mInitialized - " + mInitialized.get());
+        if (!mInitialized.compareAndSet(true, false)) {
+            logd("teardown", "WARNING, Not set up yet or already torn down.");
             return;
         }
         mConfigsMap.clear();
-        mInitialized.set(false);
         if (mContext != null) {
             mContext.unregisterReceiver(mReceiver);
             if (mSubscriptionManager != null) {
@@ -173,15 +180,14 @@ public class QtiCarrierConfigHelper {
                 mConfigsMap.put(subInfo.getSimSlotIndex(), pb);
             } else {
                 Log.d(TAG, "No configs on sub Id: " + subInfo.getSubscriptionId());
-                 mConfigsMap.put(subInfo.getSimSlotIndex(), PersistableBundle.EMPTY);
+                mConfigsMap.put(subInfo.getSimSlotIndex(), PersistableBundle.EMPTY);
             }
         }
     }
 
     private void sanityCheckConfigsLoaded(Context context, int phoneId) {
-        if (context != null && mInitialized.compareAndSet(false, true)) {
-            setup(context);
-        }
+        // Handling additional checks for initialized state and context within setup
+        setup(context);
     }
 
     public boolean isValidPhoneId(int phoneId) {
@@ -194,6 +200,7 @@ public class QtiCarrierConfigHelper {
             return false;
         }
         sanityCheckConfigsLoaded(context, phoneId);
+        logd("getBoolean", "mInitialized - " + mInitialized.get() + " context - " + context);
         PersistableBundle pb = mConfigsMap.get(phoneId);
         if (pb != null) {
             return pb.getBoolean(key, false);
@@ -204,18 +211,24 @@ public class QtiCarrierConfigHelper {
 
     public boolean getBoolean(int phoneId, String key) {
         if (!isValidPhoneId(phoneId)) {
-            Log.d(TAG, "Invalid phone ID: " + phoneId);
+            logd("getBoolean", "Invalid phone ID: " + phoneId);
+            return false;
+        }
+        if (!mInitialized.get()) {
+            logd("getBoolean", "WARNING, Not set up yet.");
             return false;
         }
         PersistableBundle pb = mConfigsMap.get(phoneId);
         if (pb != null) {
             return pb.getBoolean(key, false);
         }
-        if (!mInitialized.get()) {
-            Log.d(TAG, "WARNING, Don't set up yet.");
-            return false;
-        }
         Log.d(TAG, "WARNING, no carrier configs on phone Id: " + phoneId);
         return false;
+    }
+
+    private static void logd(String tag, String msg) {
+        if (DEBUG) {
+            android.util.Log.d(TAG, tag + DELIMITER + msg);
+        }
     }
 }

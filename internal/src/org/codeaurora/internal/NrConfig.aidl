@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -30,37 +30,4 @@
 
 package org.codeaurora.internal;
 
-import android.content.Context;
-import android.content.Intent;
-import android.content.ServiceConnection;
-import android.content.ComponentName;
-import android.os.IBinder;
-import android.os.ServiceManager;
-import android.util.Log;
-
-public class ServiceUtil {
-    private ServiceUtil() {}
-
-    static public boolean bindService(Context context, ServiceConnection connection) {
-        IBinder extTelephony = ServiceManager.getService("qti.radio.extphone");
-
-        boolean success = (extTelephony != null)? true: false;
-
-        if (success) {
-            connection.onServiceConnected(
-                    new ComponentName("com.qualcomm.qti.internal.telephony",
-                            "com.qualcomm.qti.internal.telephony"
-                            + "com.qualcomm.qti.internal.telephony.ExtTelephonyServiceImpl"),
-                            extTelephony);
-        } else {
-            /* Service connection failed. Let the client connect to Stub service */
-        }
-
-        return success;
-    }
-
-    static public boolean unbindService(ServiceConnection onnection) {
-        //We are not connecting to a bound service so return true;
-        return true;
-    }
-}
+parcelable NrConfig;

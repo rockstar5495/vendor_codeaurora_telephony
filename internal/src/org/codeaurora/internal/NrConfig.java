@@ -1,4 +1,5 @@
-/* Copyright (c) 2015, The Linux Foundation. All rights reserved.
+/*
+ * Copyright (c) 2020, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -24,33 +25,61 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
  */
 
-package org.codeaurora.ims.utils;
+package org.codeaurora.internal;
 
-import android.content.Context;
-import android.provider.Settings;
-import com.android.ims.ImsConfig;
+import android.os.Parcel;
+import android.os.Parcelable;
 
-import org.codeaurora.ims.QtiCallConstants;
+public class NrConfig implements Parcelable{
+    private static final String TAG = "NrConfig";
 
-/**
- * This class contains Qti specific utiltity functions.
- */
-public class QtiCallUtils {
-    /**
-     * Private constructor for QtiCallUtils as we don't want to instantiate this class
-     */
-    private QtiCallUtils() {
+    public static final int NR_CONFIG_INVALID = -1;
+    public static final int NR_CONFIG_COMBINED_SA_NSA = 0;
+    public static final int NR_CONFIG_NSA =  1;
+    public static final int NR_CONFIG_SA =  2;
+
+    private int mValue;
+
+    public NrConfig(int val) {
+        mValue = val;
     }
 
-     /**
-     * Returns the user configuration of IMS to CS retry setting
-     */
-    public static boolean isCsRetryEnabledByUser(Context context) {
-       return android.provider.Settings.Global.getInt(
-                    context.getContentResolver(),
-                    QtiCallConstants.IMS_TO_CS_RETRY_ENABLED,
-                    ImsConfig.FeatureValueConstants.ON) == ImsConfig.FeatureValueConstants.ON;
+    public NrConfig(Parcel in) {
+        mValue = in.readInt();
+    }
+
+    public int get() {
+        return mValue;
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    public void writeToParcel(Parcel out, int flags) {
+        out.writeInt(mValue);
+    }
+
+    public static final Parcelable.Creator<NrConfig> CREATOR = new Parcelable.Creator() {
+        public NrConfig createFromParcel(Parcel in) {
+            return new NrConfig(in);
+        }
+
+        public NrConfig[] newArray(int size) {
+            return new NrConfig[size];
+        }
+    };
+
+    public void readFromParcel(Parcel in) {
+        mValue = in.readInt();
+    }
+
+    @Override
+    public String toString() {
+        return TAG + ": " + get();
     }
 }

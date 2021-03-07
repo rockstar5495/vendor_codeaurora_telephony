@@ -1,4 +1,4 @@
-/* Copyright (c) 2015-2017, 2019 The Linux Foundation. All rights reserved.
+/* Copyright (c) 2015-2017, 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -79,20 +79,6 @@ interface IQtiImsExt {
      * @return void
      */
     oneway void getCallForwardUncondTimer(int phoneId, int reason, int serviceClass,
-            IQtiImsExtListener listener);
-
-   /**
-     * sendCallTransferRequest
-     * Transfer an established call to given number or call id
-     *
-     * @param phoneId indicates the phone instance which triggered the request
-     * @param type is one of the values QTI_IMS_*_TRANSFER, as defined in
-     *        <code>org.codeaurora.ims.utils.QtiImsExtUtils.</code>
-     * @param number indicates the target number to transfer
-     * @param listener an IQtiImsExtListener instance to indicate the response
-     * @return void
-     */
-    oneway void sendCallTransferRequest(int phoneId, int type, String number,
             IQtiImsExtListener listener);
 
    /**
@@ -285,4 +271,15 @@ interface IQtiImsExt {
      * @return void
      */
     oneway void setUssdInfoListener(int phoneId, IQtiImsExtListener listener);
+
+    /**
+     * isCallComposerEnabled
+     * Retrieves whether IMS service CALLCOMPOSER is enabled/disabled
+     *
+     * @param phoneId indicates the phone instance which triggered the request
+     * @return boolean
+     *
+     *@throws RemoteException if calling the IMS service results in an error.
+     */
+    boolean isCallComposerEnabled(int phoneId);
 }

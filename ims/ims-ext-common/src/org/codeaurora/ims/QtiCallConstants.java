@@ -1,4 +1,4 @@
-/* Copyright (c) 2015, 2019 The Linux Foundation. All rights reserved.
+/* Copyright (c) 2015, 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -235,14 +235,13 @@ public class QtiCallConstants {
     public static final int VOWIFI_QUALITY_FAIR = 2;
     public static final int VOWIFI_QUALITY_POOR = 4;
 
-    /**
-     * Extra indicating the conference support from lower layers
-     * <p>
-     * Type: boolean (true if conference is supported else false)
-     */
-    public static final String CONF_SUPPORT_IND_EXTRA_KEY = "ConfSupportInd";
-
     public static final String EXTRA_PHONE_ID = "phoneId";
+
+    //holds the call fail cause because of which redial is attempted
+    public static final String EXTRA_RETRY_CALL_FAIL_REASON = "RetryCallFailReason";
+    //holds the radiotech on which lower layers may try attempting redial
+    public static final String EXTRA_RETRY_CALL_FAIL_RADIOTECH = "RetryCallFailRadioTech";
+
 
    /**
      * Whether RTT visibility is on or off
@@ -312,16 +311,96 @@ public class QtiCallConstants {
     // Recorder Auto-Scaling Factor
     public static final int RECORDER_SCALING_FACTOR = 8;
 
+    // Refer to ImsConfigImplBase CONFIG_RESULT_* codes
+    public static final int CONFIG_RESULT_NOT_SUPPORTED = 2;
     /**
-     * Whether auto reject is enabled for IMS calls on a sub when high priority data
+     * Auto reject call options - for IMS calls on a sub when high priority data
      * is on the other sub
-     * Type: int (0 for disabled, 1 for enabled)
+     * Type: int (0 for default, 1 for auto reject, 2 for allow alerting)
      */
-    public static final String IMS_AUTO_REJECT = "qti.settings.auto_reject";
-    // Auto reject call modes
-    public static final int AUTO_REJECT_CALL_DISABLED = 0;
-    public static final int AUTO_REJECT_CALL_ENABLED = 1;
+    public static final String IMS_AUTO_REJECT_MODE = "qti.settings.auto_reject";
+    // auto reject call modes
+    // user is notified of incoming call
+    public static final int AR_MODE_ALLOW_INCOMING = 0;
+    // incoming call is auto rejected
+    public static final int AR_MODE_AUTO_REJECT = 1;
+    // user is usually alerted of incoming call but auto rejected in certain cases
+    // modem may have some optimization
+    public static final int AR_MODE_ALLOW_ALERTING = 2;
     // Auto reject call UI item, avoid conflicting values from ImsCallUtils.ConfigItem
     public static final int AUTO_REJECT_CALL_MODE = 1000;
+    public static final int QTI_CONFIG_SMS_APP = 1001;
+    public static final int QTI_CONFIG_VVM_APP = 1002;
+    public static final int QTI_CONFIG_VOWIFI_ROAMING_MODE_PREFERENCE = 1003;
+    public static final int CALL_COMPOSER_MODE = 1004;
+
+    /**
+     * Key values for the Call Composer elements
+     */
+    // Intent action broadcasted when call composer elements are available for MT
+    public static final String ACTION_CALL_COMPOSER_INFO =
+            "org.codeaurora.intent.action.CALL_COMPOSER_INFO";
+    // set for MT call composer call (unique ID to match each call)
+    // Type: int
+    public static String EXTRA_CALL_COMPOSER_TOKEN = "call_composer_token";
+
+    // set for MT call composer call (only set when the call has ended)
+    // Type: boolean
+    public static String EXTRA_CALL_COMPOSER_CALL_ENDED = "call_composer_call_ended";
+
+    // set for call composer call
+    public static String EXTRA_CALL_COMPOSER_INFO = "call_composer_info";
+
+    // set when subject is added to call composer call
+    // Type: String
+    public static final String EXTRA_CALL_COMPOSER_SUBJECT = "call_composer_subject";
+
+    // set when priority is added to call composer call
+    // Type: int (0 for urgent, 1 for normal)
+    public static String EXTRA_CALL_COMPOSER_PRIORITY = "call_composer_priority";
+
+    // set when image url is added to call composer call
+    // Type: parcelable Uri
+    public static String EXTRA_CALL_COMPOSER_IMAGE = "call_composer_image";
+
+    // set when location is added to call composer call
+    // Type: boolean
+    public static String EXTRA_CALL_COMPOSER_LOCATION = "call_composer_location";
+
+    // set for circle location
+    // Type: float
+    public static String EXTRA_CALL_COMPOSER_LOCATION_RADIUS = "call_composer_location_radius";
+
+    // latitude of the location for the call composer call
+    // Type: double
+    public static String EXTRA_CALL_COMPOSER_LOCATION_LATITUDE = "call_composer_location_latitude";
+
+    // longitude of the location for the call composer call
+    // Type: double
+    public static String EXTRA_CALL_COMPOSER_LOCATION_LONGITUDE =
+            "call_composer_location_longitude";
+
+    /**
+     * User setting to control whether dialing call composer calls are allowed
+     * Type: int (0 for disable, 1 for enabled);
+     */
+    public static final String IMS_CALL_COMPOSER = "qti.settings.call_composer";
+    public static final int CALL_COMPOSER_DISABLED = 0;
+    public static final int CALL_COMPOSER_ENABLED = 1;
+
+    /**
+     * Constants used by clients as part of registration status change indication.
+     * Below constants will be notified when modem is unable to get the geo location information.
+     */
+    // This error will be sent when time out received to get the Longitude and Latitude
+    // from GPS engine.
+    public static final int REG_ERROR_GEO_LOCATION_STATUS_TIMEOUT = 2000;
+    // This error will be sent when modem is able to get the Longitude, Latitude and unable to
+    // get the information (country, country code, postal code etc.) from telephony.
+    public static final int REG_ERROR_GEO_LOCATION_STATUS_NO_CIVIC_ADDRESS = 2001;
+    // This error will be received if GPS is disabled from UI.
+    public static final int REG_ERROR_GEO_LOCATION_STATUS_ENGINE_LOCK = 2002;
+    // This is success case, received when all the GPS errors are resolved.
+    public static final int REG_ERROR_GEO_LOCATION_STATUS_RESOLVED = 2003;
 }
 
